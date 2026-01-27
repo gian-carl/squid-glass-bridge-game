@@ -1,0 +1,73 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    font-family: sans-serif;
+}
+
+#info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #fff;
+    z-index: 2;
+    font-size: 18px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 400px;
+}
+
+.controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 10px;
+}
+
+.controls button {
+    padding: 15px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 5px;
+    background: #555;
+    color: #fff;
+    opacity: 0.8;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.controls button:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+#btnLeft {
+    background: #4CAF50;
+}
+
+#btnRight {
+    background: #2196F3;
+}
+
+@media (max-width: 768px) {
+    .controls {
+        bottom: 10px;
+        width: 90%;
+        justify-content: center;
+    }
+    
+    .controls button {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+}
+
+@media (min-width: 768px) {
+    .controls {
+        display: none; /* Hide buttons on desktop as per original */
+    }
+}

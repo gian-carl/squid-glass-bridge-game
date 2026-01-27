@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Squid Game Prize Counter & Celebration</title>
+  <!-- Link sa external CSS file -->
+  <link rel="stylesheet" href="styles4.css">
+</head>
+<body>
+  <!-- Raining Money Background -->
+  <!-- Palitan ang URL sa YOUR_RAINING_MONEY_IMAGE_URL_HERE ng aktwal na image URL -->
+  <div id="money-bg"></div>
+
+  <div id="app">
+    <div id="prize">
+      <div id="prize-lines" class="prize-filter"></div>
+      <div id="prize-shadow" class="prize-filter"></div>
+      <h2 id="prize-label">
+        <span class="asterisk">*</span>
+        <span>CASH PRIZE</span>
+        <span class="asterisk">*</span>
+      </h2>
+      <h1 id="prize-text"></h1>
+    </div>
+    <div id="shapes">
+      <div class="shape circle"></div>
+      <div class="shape square"></div>
+      <div class="shape triangle"></div>
+    </div>
+  </div>
+
+  <!-- Audio Elements para Count at Cheering -->
+  <audio id="countSound" src="money(128k).mp3"></audio>
+  <audio id="cheeringSound" src="cheer(128k).mp3"></audio>
+
+  <!-- Link sa external JavaScript file -->
+  <script src="script4.js"></script>
+</body>
+</html>

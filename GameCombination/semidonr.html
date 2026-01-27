@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squid Game Experience</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <!-- Logo Animation Container -->
+    <div id="logo-container">
+        <img src="logo.png" alt="Squid Game" id="imgLogo">
+        <div id="squid-wrapper">
+            <div class="circle circle-1"></div>
+            <div class="triangle">
+                <div class="triangle-inner"></div>
+            </div>
+            <div class="rectangle"></div>
+            <div class="circle circle-2"></div>
+        </div>
+        <div class="side1"></div>
+        <div class="side2"></div>
+        <div class="side3"></div>
+        <div class="side4"></div>
+        <h1 id="head">8650 4006</h1>
+        <button id="startButton">Start Game</button>
+    </div>
+
+    <!-- Game Scene Container (Initially Hidden) -->
+    <div id="game-container" class="hidden">
+        <div class="subway-station">
+            <!-- Salesman Character -->
+            <div class="salesman">
+                <!-- Upper Body -->
+                <div class="upper-body">
+                    <div class="head">
+                        <div class="hair"></div>
+                        <div class="face">
+                            <div class="eyes">
+                                <div class="eye left"></div>
+                                <div class="eye right"></div>
+                            </div>
+                            <div class="mouth"></div>
+                        </div>
+                    </div>
+                    <div class="suit">
+                        <div class="tie"></div>
+                    </div>
+                </div>
+                <!-- Lower Body -->
+                <div class="lower-body">
+                    <div class="shoes">
+                        <div class="shoe left"></div>
+                        <div class="shoe right"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Elements -->
+            <div class="slap-hand"></div>
+            <div class="fade-overlay"></div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="background-music" loop>
+        <source src="squid-game-tone.mp3" type="audio/mp3">
+        <source src="sqm.mp3" type="audio/mp3"> <!-- Fallback -->
+    </audio>
+    <audio id="slap-sound" src="slap(256k).mp3"></audio>
+    <audio id="train-sound" src="Traincut.mp3"></audio>
+
+    <script src="script1.js"></script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+    background-image: url('losebg.png');
+    background-size: cover;
+    background-repeat: no-repeat; /* This will stop the background image from repeating */
+    overflow: hidden;
+}
+
+.container {
+    text-align: center;
+    color: white;
+    border: black;
+    border-radius: 10%;
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    font-size: 100px;
+    text-transform: uppercase;
+    font-weight: bold;
+    position: relative;
+    display: inline-block;
+    animation: shake 1.5s infinite;
+    border-radius: 10%;
+}
+
+h1::before {
+    content: 'YOU LOSE';
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: darkred;
+    z-index: -1;
+    animation: blood-wave 1.5s infinite ease-in-out;
+    border-radius: 10%;
+}
+
+@keyframes blood-wave {
+    0% {
+        transform: translateY(-100px);
+        opacity: 0.8;
+        filter: blur(3px);
+    }
+    50% {
+        transform: translateY(50px);
+        opacity: 1;
+        filter: blur(0);
+    }
+    100% {
+        transform: translateY(-100px);
+        opacity: 0.8;
+        filter: blur(3px);
+    }
+}
+
+@keyframes shake {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-10deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* Realistic blood splash effect */
+.blood-splash {
+    position: absolute;
+    background-color: darkred;
+    border-radius: 50%;
+    opacity: 0.9;
+    box-shadow: 0 0 10px darkred, 0 0 20px darkred;
+    animation: blood-splash-animation 1s ease-out infinite;
+}
+
+.blood-splash {
+    width: 80px;
+    height: 80px;
+}
+
+#blood-splash1 { top: 10%; left: 10%; animation-delay: 0.2s; width: 120px; height: 120px; }
+#blood-splash2 { top: 25%; left: 15%; animation-delay: 0.3s; width: 100px; height: 100px; }
+#blood-splash3 { top: 50%; left: 30%; animation-delay: 0.5s; width: 110px; height: 110px; }
+#blood-splash4 { top: 60%; left: 40%; animation-delay: 0.6s; width: 120px; height: 120px; }
+#blood-splash5 { top: 20%; left: 50%; animation-delay: 0.7s; width: 90px; height: 90px; }
+#blood-splash6 { top: 80%; left: 10%; animation-delay: 0.8s; width: 140px; height: 140px; }
+#blood-splash7 { top: 15%; left: 75%; animation-delay: 0.4s; width: 130px; height: 130px; }
+#blood-splash8 { top: 35%; left: 65%; animation-delay: 0.6s; width: 100px; height: 100px; }
+#blood-splash9 { top: 45%; left: 20%; animation-delay: 0.9s; width: 80px; height: 80px; }
+#blood-splash10 { top: 70%; left: 80%; animation-delay: 1s; width: 110px; height: 110px; }
+#blood-splash11 { top: 60%; left: 55%; animation-delay: 1.1s; width: 100px; height: 100px; }
+#blood-splash12 { top: 30%; left: 90%; animation-delay: 1.2s; width: 120px; height: 120px; }
+#blood-splash13 { top: 85%; left: 30%; animation-delay: 1.3s; width: 130px; height: 130px; }
+#blood-splash14 { top: 55%; left: 50%; animation-delay: 1.4s; width: 90px; height: 90px; }
+#blood-splash15 { top: 40%; left: 10%; animation-delay: 1.5s; width: 150px; height: 150px; }
+
+@keyframes blood-splash-animation {
+    0% {
+        transform: scale(0) rotate(0);
+        opacity: 1;
+    }
+    25% {
+        transform: scale(1.1) rotate(15deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.4) rotate(-15deg);
+        opacity: 0.6;
+    }
+    75% {
+        transform: scale(1.1) rotate(10deg);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(0) rotate(0);
+        opacity: 0;
+    }
+}
+
+/* Realistic blood drip effect */
+.blood-drip {
+    position: absolute;
+    width: px;
+    height: 100px;
+    background-color: darkred;
+    opacity: 0.5;
+    animation: blood-drip-animation 2s ease-in-out infinite;
+    will-change: top, opacity;
+    border-radius: 50% 50% 50%;
+}
+
+#drip1 { left: 15%; animation-delay: 0.2s; }
+#drip2 { left: 30%; animation-delay: 0.3s; }
+#drip3 { left: 50%; animation-delay: 0.4s; }
+#drip4 { left: 60%; animation-delay: 0.5s; }
+#drip5 { left: 70%; animation-delay: 0.6s; }
+#drip6 { left: 80%; animation-delay: 0.7s; }
+#drip7 { left: 10%; animation-delay: 0.8s; }
+#drip8 { left: 20%; animation-delay: 0.9s; }
+#drip9 { left: 40%; animation-delay: 1s; }
+#drip10 { left: 50%; animation-delay: 1.1s; }
+#drip11 { left: 60%; animation-delay: 1.2s; }
+#drip12 { left: 70%; animation-delay: 1.3s; }
+#drip13 { left: 80%; animation-delay: 1.4s; }
+#drip14 { left: 90%; animation-delay: 1.5s; }
+#drip15 { left: 5%; animation-delay: 1.6s; }
+
+/* Animation for blood drips that fade out as they fall */
+@keyframes blood-drip-animation {
+    0% {
+        top: -20%; /* Start just above the top */
+        opacity: 1;
+    }
+    40%{
+        top: 50%;
+        opacity:0.6 ;
+    }
+    80% {
+        top: 500%; /* Move it to near the bottom */
+        opacity: 0; /* Start fading */
+    }
+    100% {
+        top: -20%; /* Reset to the top */
+        opacity: 0; /* Fully fade out */
+    }
+}
+#retry-btn {
+    background-color: red;
+    color: white;
+    padding: 15px 30px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10%;
+    cursor: pointer;
+    margin-top: 300px;
+    margin-left: -335px;
+    transition: background-color 0.3s;
+}
+
+#retry-btn:hover {
+    background-color: darkred;
+}
