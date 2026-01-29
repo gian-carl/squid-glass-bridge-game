@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startButton.style.animation = 'pulse 1.5s infinite';
     }, 17000);
 
-    // Start Game Handler
+    // Start Game Handler - CHANGED TO REDIRECT TO LOBBY
     startButton.addEventListener('click', () => {
         stopMusic(); // Stop the background music
         
@@ -104,9 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
             initializeGameScene();
         }, 500);
         
-        // After the animation sequence finishes, navigate to the quiz page
+        // After the animation sequence finishes, navigate to the LOBBY (CHANGED)
         setTimeout(() => {
-            window.location.href = 'quiz.html';
+            window.location.href = 'lobby.html'; // CHANGED FROM quiz.html
         }, 10000);
     });
 

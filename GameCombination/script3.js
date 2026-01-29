@@ -1,3 +1,4 @@
+// script3.js - Clean Version Without Joystick and FPS Counter
 const scene = new THREE.Scene();
 
 // LOAD CUBE MAP BACKGROUND TEXTURES
@@ -14,15 +15,287 @@ const cubeMap = cubeLoader.load([
 // Set the cube map as scene background
 scene.background = cubeMap;
 
-let audio = new Audio("heart_(128k).mp3")
-audio.loop = true;
-audio.play();
+// Simple Control System
+class GameControls {
+    constructor() {
+        this.isTouchDevice = ('ontouchstart' in window) || 
+                            (navigator.maxTouchPoints > 0) || 
+                            (navigator.msMaxTouchPoints > 0);
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        this.keys = {};
+        this.touchActive = false;
+        
+        this.init();
+    }
+    
+    init() {
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+        
+        if (this.isTouchDevice) {
+            this.setupTouchControls();
+        }
+        
+        this.setupDesktopControls();
+        this.setupCameraToggle();
+    }
+    
+    setupTouchControls() {
+        const leftZone = document.getElementById('touchLeft');
+        const rightZone = document.getElementById('touchRight');
+        
+        // Simple touch controls without joystick
+        leftZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.keys.ArrowLeft = true;
+            leftZone.classList.add('active');
+            
+            // If at entrance and can start, jump immediately
+            if (canStartQuiz && isOnLandingArea) {
+                stepForward("left");
+            }
+        });
+        
+        leftZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys.ArrowLeft = false;
+            leftZone.classList.remove('active');
+        });
+        
+        leftZone.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.keys.ArrowLeft = false;
+            leftZone.classList.remove('active');
+        });
+        
+        rightZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.keys.ArrowRight = true;
+            rightZone.classList.add('active');
+            
+            // If at entrance and can start, jump immediately
+            if (canStartQuiz && isOnLandingArea) {
+                stepForward("right");
+            }
+        });
+        
+        rightZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys.ArrowRight = false;
+            rightZone.classList.remove('active');
+        });
+        
+        rightZone.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.keys.ArrowRight = false;
+            rightZone.classList.remove('active');
+        });
+        
+        // Simple swipe controls
+        let touchStartX = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isOnLandingArea) {
+                const touchX = e.touches[0].clientX;
+                const deltaX = touchX - touchStartX;
+                
+                if (Math.abs(deltaX) > 30) {
+                    if (deltaX > 0) {
+                        this.keys.ArrowRight = true;
+                        this.keys.ArrowLeft = false;
+                    } else {
+                        this.keys.ArrowLeft = true;
+                        this.keys.ArrowRight = false;
+                    }
+                }
+            }
+        }, { passive: true });
+        
+        document.addEventListener('touchend', () => {
+            this.keys.ArrowLeft = false;
+            this.keys.ArrowRight = false;
+        });
+    }
+    
+    setupDesktopControls() {
+        const leftBtn = document.getElementById('btnLeft');
+        const rightBtn = document.getElementById('btnRight');
+        
+        leftBtn.addEventListener('click', () => {
+            if (!isAnimating && !gameOver) {
+                if (isOnLandingArea) {
+                    if (canStartQuiz) {
+                        // At entrance, jump immediately to left panel
+                        stepForward("left");
+                    } else {
+                        movePlayer(-1, 0);
+                    }
+                } else {
+                    stepForward("left");
+                }
+            }
+        });
+        
+        rightBtn.addEventListener('click', () => {
+            if (!isAnimating && !gameOver) {
+                if (isOnLandingArea) {
+                    if (canStartQuiz) {
+                        // At entrance, jump immediately to right panel
+                        stepForward("right");
+                    } else {
+                        movePlayer(1, 0);
+                    }
+                } else {
+                    stepForward("right");
+                }
+            }
+        });
+        
+        // Mouse hover effects
+        leftBtn.addEventListener('mousedown', () => leftBtn.classList.add('active'));
+        leftBtn.addEventListener('mouseup', () => leftBtn.classList.remove('active'));
+        leftBtn.addEventListener('mouseleave', () => leftBtn.classList.remove('active'));
+        
+        rightBtn.addEventListener('mousedown', () => rightBtn.classList.add('active'));
+        rightBtn.addEventListener('mouseup', () => rightBtn.classList.remove('active'));
+        rightBtn.addEventListener('mouseleave', () => rightBtn.classList.remove('active'));
+    }
+    
+    setupCameraToggle() {
+        const cameraToggle = document.getElementById('cameraToggle');
+        const cameraLabel = document.getElementById('cameraLabel');
+        
+        cameraToggle.addEventListener('click', () => {
+            if (cameraMode === "first-person") {
+                cameraMode = "third-person";
+                cameraLabel.textContent = "TP";
+                cameraToggle.classList.add('third-person');
+            } else {
+                cameraMode = "first-person";
+                cameraLabel.textContent = "FP";
+                cameraToggle.classList.remove('third-person');
+            }
+        });
+    }
+    
+    handleKeyDown(e) {
+        this.keys[e.code] = true;
+        
+        // Prevent default behavior for game keys
+        const gameKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 
+                         'KeyA', 'KeyD', 'KeyW', 'KeyS', 'KeyH', 'KeyC'];
+        if (gameKeys.includes(e.code)) {
+            e.preventDefault();
+        }
+        
+        // Hint key
+        if (e.code === 'KeyH' && hintsAvailable > 0) {
+            useHint();
+        }
+        
+        // Camera toggle key
+        if (e.code === 'KeyC') {
+            toggleCameraMode();
+        }
+        
+        // Bridge stepping or movement
+        if (!isAnimating && !gameOver) {
+            if (isOnLandingArea) {
+                if (canStartQuiz) {
+                    // At entrance, jump immediately
+                    if (e.code === "ArrowLeft" || e.code === "KeyA") {
+                        stepForward("left");
+                    } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+                        stepForward("right");
+                    }
+                } else {
+                    // Normal movement on landing area
+                    if (e.code === "ArrowLeft" || e.code === "KeyA") {
+                        movePlayer(-1, 0);
+                    } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+                        movePlayer(1, 0);
+                    }
+                }
+            } else {
+                // On bridge
+                if (e.code === "ArrowLeft" || e.code === "KeyA") {
+                    stepForward("left");
+                } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+                    stepForward("right");
+                }
+            }
+        }
+    }
+    
+    handleKeyUp(e) {
+        this.keys[e.code] = false;
+    }
+    
+    getMovement() {
+        let moveX = 0;
+        let moveZ = 0;
+        
+        if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
+            moveX -= 1;
+        }
+        if (this.keys['ArrowRight'] || this.keys['KeyD']) {
+            moveX += 1;
+        }
+        if (this.keys['ArrowUp'] || this.keys['KeyW']) {
+            moveZ -= 1;
+        }
+        if (this.keys['ArrowDown'] || this.keys['KeyS']) {
+            moveZ += 1;
+        }
+        
+        return { moveX, moveZ };
+    }
+}
 
-window.addEventListener("beforeunload",function(){
+// Initialize controls
+const gameControls = new GameControls();
+
+// Audio setup
+let audio = new Audio("heart_(128k).mp3");
+audio.loop = true;
+audio.volume = 0.3;
+
+// Initialize audio with user interaction
+function initAudio() {
+    const playAudio = () => {
+        audio.play().catch(e => {
+            console.log("Audio autoplay prevented");
+        });
+        
+        document.removeEventListener('click', playAudio);
+        document.removeEventListener('keydown', playAudio);
+        document.removeEventListener('touchstart', playAudio);
+    };
+    
+    document.addEventListener('click', playAudio);
+    document.addEventListener('keydown', playAudio);
+    document.addEventListener('touchstart', playAudio);
+    
+    // Auto-start after delay
+    setTimeout(() => {
+        if (audio.paused) {
+            playAudio();
+        }
+    }, 2000);
+}
+
+window.addEventListener("beforeunload", function() {
     audio.pause();
-    audio.currentTime = 0
+    audio.currentTime = 0;
 });
 
+// Camera and renderer setup
 const camera = new THREE.PerspectiveCamera(
     60,
     window.innerWidth / window.innerHeight,
@@ -31,17 +304,30 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 1.6, 0);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    alpha: false
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio || 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.domElement.setAttribute('tabindex', '0');
+renderer.domElement.style.outline = 'none';
 document.body.appendChild(renderer.domElement);
 
+// Focus on canvas
+renderer.domElement.focus();
+
+// Lighting
 const ambientLight = new THREE.AmbientLight(0x222222, 0.3);
 scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
 directionalLight.position.set(0, 20, 10);
+directionalLight.castShadow = true;
 scene.add(directionalLight);
 
-// Add eerie colored lights
+// Colored lights for atmosphere
 const redLight = new THREE.PointLight(0xff0000, 2, 30);
 redLight.position.set(10, 5, 0);
 scene.add(redLight);
@@ -60,14 +346,13 @@ const stepsPerLevel = 5;
 let currentGameLevel = parseInt(sessionStorage.getItem('currentLevel')) || 1;
 let totalStepsCompleted = parseInt(sessionStorage.getItem('totalStepsCompleted')) || 0;
 
+// HINT SYSTEM VARIABLES
+let hintsUsed = parseInt(sessionStorage.getItem('hintsUsed')) || 0;
+let hintsAvailable = parseInt(sessionStorage.getItem('hintsAvailable')) || 2;
+let hasClue = sessionStorage.getItem('clueAvailable') === 'true' || false;
+
 const currentLevelStartStep = (currentGameLevel - 1) * stepsPerLevel;
 const currentLevelEndStep = currentGameLevel * stepsPerLevel;
-
-let hasClue = false;
-const levelScore = parseInt(sessionStorage.getItem(`level${currentGameLevel}_score`)) || 0;
-if (levelScore >= 3) {
-    hasClue = true;
-}
 
 const panelWidth = 3;
 const panelDepth = 1.5;
@@ -83,9 +368,16 @@ function rowZ(row) {
     return startZ - gapBetweenRows * (row + 1);
 }
 
-const safeChoices = [];
-for (let i = 0; i < totalRows; i++) {
-    safeChoices.push(Math.random() < 0.5 ? "left" : "right");
+// Load safe choices from sessionStorage or generate new ones
+let safeChoices = [];
+const savedSafeChoices = sessionStorage.getItem('safeChoices');
+if (savedSafeChoices) {
+    safeChoices = JSON.parse(savedSafeChoices);
+} else {
+    for (let i = 0; i < totalRows; i++) {
+        safeChoices.push(Math.random() < 0.5 ? "left" : "right");
+    }
+    sessionStorage.setItem('safeChoices', JSON.stringify(safeChoices));
 }
 
 function createGlassMaterial() {
@@ -167,7 +459,7 @@ for (let row = 0; row < totalRows; row++) {
     panels.push(leftPanel, rightPanel);
 }
 
-// ========== CREATE BEAUTIFUL SAND TEXTURE WITH BLOOD STAINS ==========
+// ========== CREATE SAND TEXTURE WITH BLOOD STAINS ==========
 function createSandTextureWithBloodStains() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -256,28 +548,6 @@ function createSandTextureWithBloodStains() {
         }
     }
     
-    // Add some dried, dark blood stains
-    for (let i = 0; i < 10; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const size = Math.random() * 30 + 15;
-        
-        ctx.fillStyle = 'rgba(70, 0, 0, 0.4)';
-        ctx.beginPath();
-        // Create irregular dried blood pattern
-        for (let j = 0; j < 8; j++) {
-            const angle = (j / 8) * Math.PI * 2;
-            const radius = size * (0.5 + Math.random() * 0.5);
-            const pointX = x + Math.cos(angle) * radius;
-            const pointY = y + Math.sin(angle) * radius;
-            
-            if (j === 0) ctx.moveTo(pointX, pointY);
-            else ctx.lineTo(pointX, pointY);
-        }
-        ctx.closePath();
-        ctx.fill();
-    }
-    
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -286,7 +556,7 @@ function createSandTextureWithBloodStains() {
     return texture;
 }
 
-// ========== CREATE PERFECT FENCE FOR LANDING AREA ==========
+// ========== CREATE SIDE FENCE ONLY ==========
 function createSideFenceOnly(width, depth) {
     const fenceGroup = new THREE.Group();
     
@@ -483,7 +753,7 @@ function createSideFenceOnly(width, depth) {
     return fenceGroup;
 }
 
-// ========== PERFECT CIRCUS HOUSE WITH CUSTOM SIGN TEXT ==========
+// ========== CREATE CIRCUS HOUSE WITH SIGN ==========
 function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
     const house = new THREE.Group();
 
@@ -957,14 +1227,14 @@ function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
         house.add(top);
     });
 
-    // FIXED SIGN BOARD - NOT CUT OFF IN THE MIDDLE
+    // FIXED SIGN BOARD
     const signCanvas = document.createElement('canvas');
-    signCanvas.width = 2048;  // Double the width for better text rendering
+    signCanvas.width = 2048;
     signCanvas.height = 512;
     const signCtx = signCanvas.getContext('2d');
     
     // Clear canvas
-    signCtx.clearRect(0, 0, signCanvas.width, signCanvas.height);
+    signCtx.clearRect(0, 0, 2048, 512);
     
     // Sign background with dark gradient
     const signGradient = signCtx.createLinearGradient(0, 0, 0, signCanvas.height);
@@ -972,17 +1242,17 @@ function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
     signGradient.addColorStop(0.5, '#222222');
     signGradient.addColorStop(1, '#000000');
     signCtx.fillStyle = signGradient;
-    signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+    signCtx.fillRect(0, 0, 2048, 512);
     
     // Gold border with proper thickness
     signCtx.strokeStyle = '#FFD700';
     signCtx.lineWidth = 20;
-    signCtx.strokeRect(10, 10, signCanvas.width - 20, signCanvas.height - 20);
+    signCtx.strokeRect(10, 10, 2048 - 20, 512 - 20);
     
     // Calculate text position and size
     const text = signText.toUpperCase();
-    const centerX = signCanvas.width / 2;
-    const centerY = signCanvas.height / 2;
+    const centerX = 2048 / 2;
+    const centerY = 512 / 2;
     
     // Set font - larger and bold
     signCtx.font = 'bold 100px "Arial Black", sans-serif';
@@ -1032,7 +1302,7 @@ function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
     
     const signTexture = new THREE.CanvasTexture(signCanvas);
     // Make sign larger and positioned properly
-    const signGeometry = new THREE.PlaneGeometry(10, 2.5); // Wider sign
+    const signGeometry = new THREE.PlaneGeometry(10, 2.5);
     const signMaterial = new THREE.MeshBasicMaterial({
         map: signTexture,
         transparent: true,
@@ -1099,7 +1369,7 @@ function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
     return house;
 }
 
-// ========== CREATE PERFECT LANDING AREA WITH SIDE FENCE ==========
+// ========== CREATE PERFECT LANDING AREA ==========
 function createPerfectLandingArea(width, depth, positionZ, isStart = true) {
     const landingArea = new THREE.Group();
     
@@ -1296,7 +1566,7 @@ const rightRail = new THREE.Mesh(railGeometry, railMaterial);
 rightRail.position.set(rightRailX, railY, (startZ + (startZ - gapBetweenRows * (totalRows + 1))) / 2);
 scene.add(rightRail);
 
-// Bridge lights - ORIGINAL CODE PATTERN
+// Bridge lights
 const lightGeometry = new THREE.SphereGeometry(0.1, 12, 12);
 const lightColors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00];
 const bridgeLights = [];
@@ -1309,7 +1579,7 @@ function createLight(color) {
 const spacing = 0.8;
 const numLights = Math.floor(railLength / spacing);
 
-// Left side lights - ORIGINAL PATTERN
+// Left side lights
 for (let i = 0; i < numLights; i++) {
     const color = lightColors[i % lightColors.length];
     const lightMesh = createLight(color);
@@ -1322,7 +1592,7 @@ for (let i = 0; i < numLights; i++) {
     bridgeLights.push(lightMesh);
 }
 
-// Right side lights - ORIGINAL PATTERN
+// Right side lights
 for (let i = 0; i < numLights; i++) {
     const color = lightColors[(i + 2) % lightColors.length];
     const lightMesh = createLight(color);
@@ -1335,7 +1605,7 @@ for (let i = 0; i < numLights; i++) {
     bridgeLights.push(lightMesh);
 }
 
-// Middle lights - ORIGINAL PATTERN
+// Middle lights
 for (let i = 0; i < numLights; i++) {
     const color = lightColors[(i + 1) % lightColors.length];
     const lightMesh = createLight(color);
@@ -1459,69 +1729,127 @@ let fallingObjects = [];
 let brokenGlassPanels = new Set();
 let isOnLandingArea = true;
 let canStartQuiz = false;
+let cameraOffset = new THREE.Vector3(0, 1.6, 0);
+let thirdPersonOffset = new THREE.Vector3(0, 2, 3);
 
 // Player movement variables
-const moveSpeed = 0.08;
+const moveSpeed = 0.15;
 const maxLandingX = panelWidth * 2;
 const minLandingX = -panelWidth * 2;
 const landingZStart = startZ + landingAreaLength/2;
 const landingZRange = landingAreaLength/2 - 1;
 
-// ========== GAME FUNCTIONS ==========
-function updatePlayerPosition() {
-    // Position is updated directly in movePlayer function
-}
-
-function movePlayer(directionX, directionZ = 0) {
-    if (!isOnLandingArea || isAnimating || gameOver) return;
+// ========== HINT SYSTEM FUNCTIONS ==========
+function updateHintDisplay() {
+    const hintCountElement = document.getElementById('hintCount');
+    const hintIcon = document.getElementById('hintIcon');
     
-    let newX = player.position.x + (directionX * moveSpeed);
-    let newZ = player.position.z + (directionZ * moveSpeed);
-    
-    // Clamp to landing area boundaries
-    newX = Math.max(minLandingX, Math.min(maxLandingX, newX));
-    
-    // Allow some forward/backward movement but limit to landing area
-    const maxZ = landingZStart + landingZRange;
-    const minZ = landingZStart - landingZRange;
-    newZ = Math.max(minZ, Math.min(maxZ, newZ));
-    
-    // Smooth movement
-    player.position.x = newX;
-    player.position.z = newZ;
-    player.position.y = panelY + 1;
-    
-    // Check if player is at bridge entrance
-    const distanceToBridge = Math.abs(player.position.z - startZ);
-    if (distanceToBridge < 1.5 && Math.abs(player.position.x) < 1) {
-        canStartQuiz = true;
-        player.material.color.setHex(0x00FF00);
-        setTimeout(() => {
-            player.material.color.setHex(0xFFFFFF);
-        }, 200);
-    } else {
-        canStartQuiz = false;
+    if (hintCountElement) {
+        hintCountElement.textContent = hintsAvailable;
     }
     
-    updateInfoText();
-}
-
-function updateInfoText() {
-    if (isOnLandingArea) {
-        if (canStartQuiz) {
-            document.getElementById("info").innerHTML = 
-                `Level ${currentGameLevel} - Pindutin ang SPACE BAR para magsimula`;
+    if (hintIcon) {
+        if (hintsAvailable <= 0) {
+            hintIcon.classList.add('disabled');
+            hintIcon.style.cursor = 'not-allowed';
         } else {
-            document.getElementById("info").innerHTML = 
-                `Level ${currentGameLevel} - Gumamit ng W/A/S/D para lumakad`;
+            hintIcon.classList.remove('disabled');
+            hintIcon.style.cursor = 'pointer';
         }
-    } else {
-        const stepInLevel = totalStepsCompleted - currentLevelStartStep + 1;
-        const levelText = `Level ${currentGameLevel} - Hakbang ${stepInLevel}/${stepsPerLevel}`;
-        const clueText = hasClue ? "<br><span style='color:#00ff00'>TANDAAN ANG MUNTING SALAMIN!</span>" : "<br><span style='color:yellow'>WALANG CLUE - GOOD LUCK!</span>";
-        
-        document.getElementById("info").innerHTML = levelText + clueText;
     }
+    
+    updateProgress();
+}
+
+function useHint() {
+    if (hintsAvailable <= 0 || gameOver || isAnimating) {
+        return;
+    }
+    
+    // Decrement hints
+    hintsUsed++;
+    hintsAvailable--;
+    
+    // Save hint state
+    sessionStorage.setItem('hintsUsed', hintsUsed);
+    sessionStorage.setItem('hintsAvailable', hintsAvailable);
+    
+    // Save game state
+    const gameState = {
+        playerX: player.position.x,
+        playerY: player.position.y,
+        playerZ: player.position.z,
+        totalStepsCompleted: totalStepsCompleted,
+        currentLevel: currentGameLevel,
+        isOnLandingArea: isOnLandingArea,
+        isAnimating: isAnimating,
+        gameOver: gameOver,
+        canStartQuiz: canStartQuiz,
+        safeChoices: safeChoices,
+        panelsState: panels.map(p => ({
+            row: p.userData.row,
+            side: p.userData.side,
+            safe: p.userData.safe,
+            isBroken: p.userData.isBroken || false,
+            visible: p.visible
+        }))
+    };
+    
+    sessionStorage.setItem('bridgeGameState', JSON.stringify(gameState));
+    
+    // Go to quiz for hint
+    window.location.href = 'quiz.html';
+}
+
+function restoreGameState() {
+    const savedState = sessionStorage.getItem('bridgeGameState');
+    if (savedState) {
+        try {
+            const state = JSON.parse(savedState);
+            
+            // Restore player position
+            player.position.set(state.playerX, state.playerY, state.playerZ);
+            
+            // Restore game progress
+            totalStepsCompleted = state.totalStepsCompleted || 0;
+            currentGameLevel = state.currentLevel || 1;
+            
+            // Restore game state flags
+            isOnLandingArea = state.isOnLandingArea !== undefined ? state.isOnLandingArea : true;
+            isAnimating = false;
+            gameOver = state.gameOver || false;
+            canStartQuiz = state.canStartQuiz || false;
+            
+            // Restore panels state
+            if (state.panelsState) {
+                state.panelsState.forEach((panelState, index) => {
+                    if (index < panels.length) {
+                        const panel = panels[index];
+                        panel.userData.isBroken = panelState.isBroken || false;
+                        panel.visible = panelState.visible !== undefined ? panelState.visible : true;
+                        
+                        // Remove border if panel is broken
+                        if (panelState.isBroken && panel.children.length > 0) {
+                            panel.remove(panel.children[0]);
+                        }
+                    }
+                });
+            }
+            
+            // Clear hint mode and game state
+            sessionStorage.removeItem('bridgeGameState');
+            
+            // Update displays
+            updateHintDisplay();
+            updateProgress();
+            
+            return true;
+        } catch (error) {
+            console.error("Error restoring game state:", error);
+            return false;
+        }
+    }
+    return false;
 }
 
 function showAllSafeGlassesForCurrentLevel() {
@@ -1529,16 +1857,17 @@ function showAllSafeGlassesForCurrentLevel() {
     
     shownClueForThisLevel = true;
     
-    for (let i = 0; i < stepsPerLevel; i++) {
-        const step = currentLevelStartStep + i;
-        if (step >= totalRows) break;
-        
+    const currentSection = Math.floor(totalStepsCompleted / stepsPerLevel);
+    const sectionStart = currentSection * stepsPerLevel;
+    const sectionEnd = Math.min(sectionStart + stepsPerLevel, totalRows);
+    
+    for (let step = sectionStart; step < sectionEnd; step++) {
         const safeSide = safeChoices[step];
         const cluePanel = panels.find(p => 
-            p.userData.row === step && p.userData.side === safeSide
+            p.userData.row === step && p.userData.side === safeSide && !p.userData.isBroken
         );
         
-        if (cluePanel && !cluePanel.userData.isBroken) {
+        if (cluePanel) {
             (function(panel, stepIndex) {
                 setTimeout(() => {
                     let blinkCount = 0;
@@ -1566,35 +1895,89 @@ function showAllSafeGlassesForCurrentLevel() {
                     }
                     
                     blink();
-                }, i * 600);
-            })(cluePanel, i);
+                }, (step - sectionStart) * 600);
+            })(cluePanel, step);
         }
     }
-    
-    setTimeout(() => {
-        const oldInfo = document.getElementById("info").innerHTML;
-        document.getElementById("info").innerHTML = oldInfo + "<br><span style='color:#00ff00'>MEMORIZE COMPLETE! CHOOSE YOUR STEPS!</span>";
-    }, (stepsPerLevel * 600) + 1000);
 }
 
-function startQuizAndBridge() {
-    if (!canStartQuiz || !isOnLandingArea) return;
+// ========== MOVEMENT FUNCTIONS ==========
+function handleMovement() {
+    if (!isOnLandingArea || isAnimating || gameOver) return;
     
-    if (hasClue) {
-        showAllSafeGlassesForCurrentLevel();
+    const movement = gameControls.getMovement();
+    
+    if (movement.moveX !== 0 || movement.moveZ !== 0) {
+        movePlayer(movement.moveX, movement.moveZ);
+    }
+}
+
+function movePlayer(directionX, directionZ = 0) {
+    if (!isOnLandingArea || isAnimating || gameOver) return;
+    
+    let newX = player.position.x + (directionX * moveSpeed);
+    let newZ = player.position.z + (directionZ * moveSpeed);
+    
+    // Clamp to landing area boundaries
+    newX = Math.max(minLandingX, Math.min(maxLandingX, newX));
+    
+    // Allow some forward/backward movement but limit to landing area
+    const maxZ = landingZStart + landingZRange;
+    const minZ = landingZStart - landingZRange;
+    newZ = Math.max(minZ, Math.min(maxZ, newZ));
+    
+    // Smooth movement
+    player.position.x = newX;
+    player.position.z = newZ;
+    player.position.y = panelY + 1;
+    
+    // Check if player is at bridge entrance
+    const distanceToBridge = Math.abs(player.position.z - startZ);
+    if (distanceToBridge < 1.5 && Math.abs(player.position.x) < 1) {
+        canStartQuiz = true;
+        // Make player glow green when at entrance
+        player.material.color.setHex(0x00FF00);
+        setTimeout(() => {
+            player.material.color.setHex(0xFFFFFF);
+        }, 200);
+    } else {
+        canStartQuiz = false;
     }
     
-    isOnLandingArea = false;
-    player.position.set(0, panelY + 1, startZ);
-    updateInfoText();
+    updateProgress();
+}
+
+function updateProgress() {
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+        const progress = (totalStepsCompleted / totalRows) * 100;
+        progressFill.style.width = `${progress}%`;
+    }
+}
+
+function toggleCameraMode() {
+    if (cameraMode === "first-person") {
+        cameraMode = "third-person";
+        document.getElementById('cameraLabel').textContent = "TP";
+        document.getElementById('cameraToggle').classList.add('third-person');
+    } else {
+        cameraMode = "first-person";
+        document.getElementById('cameraLabel').textContent = "FP";
+        document.getElementById('cameraToggle').classList.remove('third-person');
+    }
 }
 
 function stepForward(selection) {
     if (gameOver || isAnimating || totalStepsCompleted >= totalRows) return;
     
+    // If we're on landing area at entrance, set to bridge mode
+    if (isOnLandingArea && canStartQuiz) {
+        isOnLandingArea = false;
+        player.position.set(0, panelY + 1, startZ);
+    }
+    
     const nextRow = totalStepsCompleted;
     if (nextRow >= totalRows) {
-        updateInfoText("Congratulations! You crossed the glass bridge.");
         setTimeout(() => {
             window.location.href = 'win.html';
         }, 2000);
@@ -1612,7 +1995,6 @@ function stepForward(selection) {
     
     animatePlayer(targetPos, () => {
         if (!targetPanel.userData.safe) {
-            updateInfoText("Game Over! You fell from the glass bridge.");
             gameOver = true;
             
             targetPanel.userData.isBroken = true;
@@ -1634,87 +2016,155 @@ function stepForward(selection) {
             
             if (totalStepsCompleted >= currentLevelEndStep) {
                 if (currentGameLevel < 4) {
+                    currentGameLevel++;
+                    sessionStorage.setItem('currentLevel', currentGameLevel);
                     shownClueForThisLevel = false;
-                    updateInfoText(`Level ${currentGameLevel} Completed! Moving to Level ${currentGameLevel + 1}...`);
-                    
-                    setTimeout(() => {
-                        currentGameLevel++;
-                        sessionStorage.setItem('currentLevel', currentGameLevel);
-                        window.location.href = 'quiz.html';
-                    }, 2000);
+                    hasClue = false;
+                    sessionStorage.setItem('clueAvailable', 'false');
                 } else {
-                    updateInfoText("Congratulations! You crossed the glass bridge.");
                     setTimeout(() => {
                         window.location.href = 'win.html';
                     }, 2000);
                 }
-            } else {
-                updateInfoText();
             }
         }
+        updateProgress();
     });
 }
 
+// IMPROVED GLASS SHATTER FUNCTION
 function createBrokenGlassPieces(panel) {
-    const numPieces = 8 + Math.floor(Math.random() * 4);
+    const numPieces = 12 + Math.floor(Math.random() * 8); // More pieces
     const glassMaterial = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.6,
+        opacity: 0.7,
         side: THREE.DoubleSide,
+        shininess: 100
     });
     
+    // Create pieces with more realistic shapes
     for (let i = 0; i < numPieces; i++) {
-        const pieceWidth = 0.2 + Math.random() * 0.3;
-        const pieceDepth = 0.2 + Math.random() * 0.3;
-        const pieceGeometry = new THREE.PlaneGeometry(pieceWidth, pieceDepth);
+        // Create irregular glass piece shape
+        const pieceSize = 0.15 + Math.random() * 0.25;
+        const pieceGeometry = new THREE.PlaneGeometry(pieceSize, pieceSize);
+        
+        // Distort vertices to create irregular shapes
+        const vertices = pieceGeometry.attributes.position;
+        for (let j = 0; j < vertices.count; j++) {
+            const x = vertices.getX(j);
+            const y = vertices.getY(j);
+            const distortion = 0.3;
+            vertices.setX(j, x + (Math.random() - 0.5) * distortion);
+            vertices.setY(j, y + (Math.random() - 0.5) * distortion);
+        }
         
         const piece = new THREE.Mesh(pieceGeometry, glassMaterial);
         piece.position.copy(panel.position);
         piece.position.y = panelY + 0.05;
         piece.rotation.x = -Math.PI / 2;
         
+        // Random rotation
         piece.rotation.z = Math.random() * Math.PI * 2;
         
-        const explosionForce = 0.2;
+        // More realistic explosion with varied velocities
+        const explosionForce = 0.25 + Math.random() * 0.15;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 0.1 + Math.random() * 0.3;
+        
         piece.userData.velocity = new THREE.Vector3(
-            (Math.random() - 0.5) * explosionForce,
-            Math.random() * 0.4 + 0.3,
-            (Math.random() - 0.5) * explosionForce
+            Math.cos(angle) * explosionForce * (0.5 + Math.random() * 0.5),
+            Math.random() * 0.5 + 0.3, // Upward force
+            Math.sin(angle) * explosionForce * (0.5 + Math.random() * 0.5)
         );
         
+        // Add rotation with more variation
         piece.userData.rotationSpeed = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.15,
-            (Math.random() - 0.5) * 0.15,
-            (Math.random() - 0.5) * 0.15
+            (Math.random() - 0.5) * 0.2,
+            (Math.random() - 0.5) * 0.2,
+            (Math.random() - 0.5) * 0.2
         );
+        
+        // Add wobble effect for more realism
+        piece.userData.wobble = {
+            speed: Math.random() * 0.05 + 0.02,
+            amplitude: Math.random() * 0.1 + 0.05,
+            offset: Math.random() * Math.PI * 2
+        };
         
         piece.userData.falling = true;
+        piece.userData.life = 1.0; // Life counter for fade out
         scene.add(piece);
         fallingObjects.push(piece);
+    }
+    
+    // Add some glass dust particles
+    const dustCount = 8;
+    for (let i = 0; i < dustCount; i++) {
+        const dustGeometry = new THREE.SphereGeometry(0.02 + Math.random() * 0.03, 4, 4);
+        const dust = new THREE.Mesh(dustGeometry, glassMaterial);
+        dust.position.copy(panel.position);
+        dust.position.y = panelY + 0.02;
+        
+        dust.userData.velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.1,
+            Math.random() * 0.2 + 0.1,
+            (Math.random() - 0.5) * 0.1
+        );
+        
+        dust.userData.rotationSpeed = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.1,
+            (Math.random() - 0.5) * 0.1,
+            (Math.random() - 0.5) * 0.1
+        );
+        
+        dust.userData.falling = true;
+        dust.userData.life = 0.8;
+        scene.add(dust);
+        fallingObjects.push(dust);
     }
 }
 
 function updateFallingObjects() {
+    const currentTime = Date.now();
     for (let i = fallingObjects.length - 1; i >= 0; i--) {
         const obj = fallingObjects[i];
         
         if (obj.userData.falling) {
-            obj.userData.velocity.y -= 0.015;
+            // Apply gravity
+            obj.userData.velocity.y -= 0.02;
             
+            // Update position
             obj.position.x += obj.userData.velocity.x * 0.08;
             obj.position.y += obj.userData.velocity.y * 0.08;
             obj.position.z += obj.userData.velocity.z * 0.08;
             
+            // Update rotation
             obj.rotation.x += obj.userData.rotationSpeed.x;
             obj.rotation.y += obj.userData.rotationSpeed.y;
             obj.rotation.z += obj.userData.rotationSpeed.z;
             
-            if (obj.position.y < panelY - 5) {
-                obj.material.opacity *= 0.95;
+            // Apply wobble effect if present
+            if (obj.userData.wobble) {
+                const wobble = obj.userData.wobble;
+                const time = currentTime * 0.001;
+                const wobbleAmount = Math.sin(time * wobble.speed + wobble.offset) * wobble.amplitude;
+                obj.position.x += Math.sin(time * wobble.speed * 2) * wobbleAmount * 0.5;
+                obj.position.z += Math.cos(time * wobble.speed * 2) * wobbleAmount * 0.5;
             }
             
-            if (obj.position.y < -30 || obj.material.opacity < 0.05) {
+            // Reduce life and fade out
+            if (obj.position.y < panelY - 2) {
+                obj.userData.life -= 0.02;
+                obj.material.opacity = obj.userData.life * 0.7;
+                
+                // Slow down when near ground
+                obj.userData.velocity.x *= 0.95;
+                obj.userData.velocity.z *= 0.95;
+            }
+            
+            // Remove when out of bounds or faded out
+            if (obj.position.y < -30 || obj.userData.life <= 0 || obj.material.opacity < 0.05) {
                 scene.remove(obj);
                 fallingObjects.splice(i, 1);
             }
@@ -1832,8 +2282,7 @@ function animateFalling() {
                 function finalShake() {
                     if (shakeCount >= maxShakes) {
                         setTimeout(() => {
-                            sessionStorage.removeItem('totalStepsCompleted');
-                            sessionStorage.removeItem('currentLevel');
+                            sessionStorage.clear();
                             window.location.href = 'lose.html';
                         }, 800);
                         return;
@@ -1859,139 +2308,41 @@ function animateFalling() {
 }
 
 // ========== EVENT LISTENERS ==========
-const keysPressed = {};
+// Hint icon
+document.getElementById("hintIcon").addEventListener("click", useHint);
 
-window.addEventListener("keydown", (event) => {
-    keysPressed[event.code] = true;
-    
-    if (event.code === "Space" && isOnLandingArea && canStartQuiz) {
-        event.preventDefault();
-        startQuizAndBridge();
-        return;
-    }
-    
-    if (!isOnLandingArea && !isAnimating && !gameOver) {
-        if (event.code === "ArrowLeft" || event.code === "KeyA") {
-            event.preventDefault();
-            stepForward("left");
-        } else if (event.code === "ArrowRight" || event.code === "KeyD") {
-            event.preventDefault();
-            stepForward("right");
-        }
+// Sound toggle
+document.getElementById("soundToggle").addEventListener("click", () => {
+    const soundToggle = document.getElementById("soundToggle");
+    if (audio.paused) {
+        audio.play();
+        soundToggle.classList.remove('muted');
+    } else {
+        audio.pause();
+        soundToggle.classList.add('muted');
     }
 });
 
-window.addEventListener("keyup", (event) => {
-    keysPressed[event.code] = false;
-});
-
-function handleMovement() {
-    if (!isOnLandingArea || isAnimating || gameOver) return;
-    
-    let moveX = 0;
-    let moveZ = 0;
-    
-    if (keysPressed["ArrowLeft"] || keysPressed["KeyA"]) {
-        moveX -= 1;
-    }
-    if (keysPressed["ArrowRight"] || keysPressed["KeyD"]) {
-        moveX += 1;
-    }
-    
-    if (keysPressed["ArrowUp"] || keysPressed["KeyW"]) {
-        moveZ -= 1;
-    }
-    if (keysPressed["ArrowDown"] || keysPressed["KeyS"]) {
-        moveZ += 1;
-    }
-    
-    if (moveX !== 0 && moveZ !== 0) {
-        moveX *= 0.7071;
-        moveZ *= 0.7071;
-    }
-    
-    if (moveX !== 0 || moveZ !== 0) {
-        movePlayer(moveX, moveZ);
-    }
-}
-
-document.getElementById("btnLeft").addEventListener("click", () => {
-    if (!isAnimating && !gameOver) {
-        if (isOnLandingArea) {
-            movePlayer(-1, 0);
-        } else {
-            stepForward("left");
-        }
+// Camera toggle key
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyC') {
+        toggleCameraMode();
     }
 });
 
-document.getElementById("btnRight").addEventListener("click", () => {
-    if (!isAnimating && !gameOver) {
-        if (isOnLandingArea) {
-            movePlayer(1, 0);
-        } else {
-            stepForward("right");
-        }
-    }
-});
-
-const startQuizBtn = document.createElement("button");
-startQuizBtn.id = "btnStartQuiz";
-startQuizBtn.textContent = "Start Quiz/Bridge";
-startQuizBtn.style.cssText = `
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 15px 25px;
-    font-size: 18px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    display: none;
-    z-index: 100;
-`;
-document.querySelector('.controls').appendChild(startQuizBtn);
-
-document.getElementById("btnStartQuiz").addEventListener("click", () => {
-    if (isOnLandingArea && canStartQuiz) {
-        startQuizAndBridge();
-    }
-});
-
-let isDragging = false;
-let previousPointer = { x: 0, y: 0 };
-
-renderer.domElement.addEventListener("pointerdown", (event) => {
-    isDragging = true;
-    previousPointer.x = event.clientX;
-    previousPointer.y = event.clientY;
-});
-
-renderer.domElement.addEventListener("pointerup", () => {
-    isDragging = false;
-});
-
-renderer.domElement.addEventListener("pointermove", (event) => {
-    if (!isDragging) return;
-    const deltaX = event.clientX - previousPointer.x;
-    const deltaY = event.clientY - previousPointer.y;
-    previousPointer.x = event.clientX;
-    previousPointer.y = event.clientY;
-    cameraAngle -= deltaX * 0.005;
-    cameraPitch -= deltaY * 0.005;
-    cameraPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraPitch));
+// Canvas focus
+renderer.domElement.addEventListener('click', () => {
+    renderer.domElement.focus();
 });
 
 // ========== ANIMATION LOOP ==========
 function animate() {
     requestAnimationFrame(animate);
-
+    
+    // Handle movement based on controls
     handleMovement();
-
-    // ORIGINAL BRIDGE LIGHTS ANIMATION - Exact same as original code
+    
+    // Update bridge lights
     bridgeLights.forEach(light => {
         const scale = 0.8 + 0.2 * Math.abs(Math.sin(Date.now() * 0.005 + light.position.z));
         light.scale.set(scale, scale, scale);
@@ -2002,13 +2353,9 @@ function animate() {
         if (house.userData.bulbs) {
             house.userData.bulbs.forEach(bulb => {
                 const flicker = 0.8 + 0.2 * Math.random();
-                if (bulb.material.emissiveIntensity !== undefined) {
-                    bulb.material.emissiveIntensity = flicker;
-                } else {
-                    const baseColor = new THREE.Color(bulb.material.color);
-                    baseColor.multiplyScalar(flicker);
-                    bulb.material.emissive = baseColor;
-                }
+                const baseColor = new THREE.Color(bulb.material.color);
+                baseColor.multiplyScalar(flicker);
+                bulb.material.emissive = baseColor;
             });
         }
         
@@ -2028,13 +2375,7 @@ function animate() {
         });
     });
 
-    const startQuizBtn = document.getElementById("btnStartQuiz");
-    if (isOnLandingArea && canStartQuiz) {
-        startQuizBtn.style.display = 'block';
-    } else {
-        startQuizBtn.style.display = 'none';
-    }
-
+    // Camera positioning based on mode
     if (cameraMode === "first-person" && !gameOver) {
         const eyeOffset = new THREE.Vector3(0, 1.6, 0);
         const cameraPos = player.position.clone().add(eyeOffset);
@@ -2046,24 +2387,135 @@ function animate() {
         );
         const lookAtPos = cameraPos.clone().add(direction);
         camera.lookAt(lookAtPos);
+    } else if (cameraMode === "third-person" && !gameOver) {
+        // Third person camera - behind and above player
+        const offset = thirdPersonOffset.clone();
+        const cameraPos = player.position.clone().add(offset);
+        camera.position.lerp(cameraPos, 0.1);
+        camera.lookAt(player.position.x, player.position.y + 0.5, player.position.z);
     }
+
+    // Update falling objects
+    updateFallingObjects();
 
     renderer.render(scene, camera);
 }
 
 // ========== INITIALIZE GAME ==========
 window.addEventListener("load", () => {
-    isOnLandingArea = true;
-    player.position.set(0, panelY + 1, startZ + landingAreaLength/2);
-    updateInfoText();
+    // Initialize audio
+    initAudio();
+    
+    // Hide loading indicator
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        setTimeout(() => {
+            loadingIndicator.style.opacity = '0';
+            setTimeout(() => {
+                loadingIndicator.style.display = 'none';
+            }, 500);
+        }, 1000);
+    }
+    
+    // Orientation handling
+    function updateOrientation() {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const errorOverlay = document.getElementById('errorOverlay');
+        
+        if (isPortrait && gameControls.isMobile) {
+            if (errorOverlay) errorOverlay.style.display = 'flex';
+        } else {
+            if (errorOverlay) errorOverlay.style.display = 'none';
+        }
+    }
+    
+    updateOrientation();
+    window.addEventListener('resize', updateOrientation);
+    window.addEventListener('orientationchange', updateOrientation);
+    
+    // Try to restore saved game state
+    const restored = restoreGameState();
+    
+    if (!restored) {
+        // Fresh start
+        isOnLandingArea = true;
+        player.position.set(0, panelY + 1, startZ + landingAreaLength/2);
+        canStartQuiz = false;
+        
+        // Initialize hint system
+        hintsAvailable = parseInt(sessionStorage.getItem('hintsAvailable')) || 2;
+        hintsUsed = parseInt(sessionStorage.getItem('hintsUsed')) || 0;
+        
+        // Initialize clue system
+        hasClue = sessionStorage.getItem('clueAvailable') === 'true' || false;
+    }
+    
+    // Update displays
+    updateHintDisplay();
+    updateProgress();
     
     shownClueForThisLevel = false;
+    
+    // Focus on canvas
+    renderer.domElement.focus();
+    
+    // Start animation loop
+    animate();
 });
 
+// Enhanced resize handling
+let resizeTimeout;
 window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Adjust for mobile performance
+        if (window.innerWidth <= 768 && gameControls.isMobile) {
+            renderer.setPixelRatio(1);
+        } else {
+            renderer.setPixelRatio(window.devicePixelRatio || 1);
+        }
+    }, 250);
 });
 
+// Prevent zoom on mobile
+document.addEventListener('touchmove', function(e) {
+    if(e.scale !== 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Prevent pull-to-refresh on mobile
+let lastTouchY = 0;
+document.addEventListener('touchstart', function(e) {
+    lastTouchY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+    const touchY = e.touches[0].clientY;
+    const touchDeltaY = touchY - lastTouchY;
+    
+    // If user is trying to scroll up from the top, prevent it
+    if (window.scrollY === 0 && touchDeltaY > 0) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Handle device sleep/wake
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Game paused
+        audio.pause();
+    } else {
+        // Game resumed
+        if (!document.getElementById('soundToggle').classList.contains('muted')) {
+            audio.play();
+        }
+    }
+});
+
+// Start animation
 animate();

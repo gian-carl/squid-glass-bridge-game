@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Glass Bridge - Player Lobby</title>
+    <link rel="stylesheet" href="styles7.css">
+</head>
+<body>
+    <div id="lobby-container">
+        <audio id="lobbyMusic" src="heart_(128k).mp3" preload="auto" loop></audio>
+        
+        <div class="lobby-header">
+            <h1>🎮 GLASS BRIDGE GAME 🎮</h1>
+            <p class="subtitle">Squid Game Experience</p>
+        </div>
+        
+        <div class="waiting-area">
+            <div class="player-counter">
+                <span id="playerCount">1</span>
+                <p>Players in Lobby</p>
+            </div>
+            
+            <div class="countdown-container">
+                <h2>Game starts in:</h2>
+                <div id="countdown" class="countdown">60</div>
+                <p class="countdown-note">Maximum 10 players allowed</p>
+            </div>
+            
+            <div class="hint-info">
+                <h3>📋 GAME RULES:</h3>
+                <ul>
+                    <li>✓ Each player gets <strong>2 hints</strong> for entire game</li>
+                    <li>✓ Use hints wisely - they reveal safe glass patterns</li>
+                    <li>✓ Bridge has 20 steps total (4 sections of 5 steps)</li>
+                    <li>✓ Fall = Game Over, Cross = WIN 4.56 Million</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="btnStartNow" onclick="startGameNow()">🚀 Start Game Immediately</button>
+            <p class="note">(Waiting for more players...)</p>
+        </div>
+        
+        <div class="player-list">
+            <h3>👥 Players Ready:</h3>
+            <ul id="playerList">
+                <li>Player 1 (You) ✅</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="lobby.js"></script>
+</body>
+</html>

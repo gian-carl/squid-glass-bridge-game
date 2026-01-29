@@ -1,0 +1,243 @@
+/* styles7.css - Lobby Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#lobby-container {
+    width: 90%;
+    max-width: 1000px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 30px;
+    border: 3px solid #ed147c;
+    box-shadow: 0 0 50px rgba(237, 20, 124, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.lobby-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ed147c;
+}
+
+.lobby-header h1 {
+    font-size: 2.5rem;
+    color: #ed147c;
+    text-shadow: 0 0 10px rgba(237, 20, 124, 0.8);
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #eeba6e;
+}
+
+.waiting-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.player-counter {
+    flex: 1;
+    text-align: center;
+    background: rgba(237, 20, 124, 0.2);
+    padding: 20px;
+    border-radius: 15px;
+    min-width: 200px;
+}
+
+.player-counter span {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #00ff00;
+    display: block;
+    text-shadow: 0 0 20px #00ff00;
+}
+
+.player-counter p {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    color: #ccc;
+}
+
+.countdown-container {
+    flex: 2;
+    text-align: center;
+    background: rgba(34, 34, 34, 0.9);
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px solid #eeba6e;
+    min-width: 300px;
+}
+
+.countdown-container h2 {
+    color: #eeba6e;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+#countdown {
+    font-size: 5rem;
+    font-weight: bold;
+    color: #ff4444;
+    text-shadow: 0 0 30px #ff4444;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.countdown-note {
+    margin-top: 15px;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.hint-info {
+    flex: 1;
+    background: rgba(43, 75, 65, 0.3);
+    padding: 20px;
+    border-radius: 15px;
+    min-width: 250px;
+}
+
+.hint-info h3 {
+    color: #eeba6e;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.hint-info ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.hint-info li {
+    margin: 10px 0;
+    padding-left: 25px;
+    position: relative;
+    color: #ddd;
+}
+
+.hint-info li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #ed147c;
+}
+
+.controls {
+    text-align: center;
+    margin: 30px 0;
+}
+
+#btnStartNow {
+    background: linear-gradient(45deg, #ed147c, #ff3366);
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    box-shadow: 0 0 20px rgba(237, 20, 124, 0.7);
+}
+
+#btnStartNow:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(237, 20, 124, 1);
+}
+
+.note {
+    margin-top: 15px;
+    color: #aaa;
+    font-style: italic;
+}
+
+.player-list {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 30px;
+}
+
+.player-list h3 {
+    color: #eeba6e;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+#playerList {
+    list-style: none;
+    columns: 2;
+    column-gap: 40px;
+}
+
+#playerList li {
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ed147c;
+    color: #fff;
+}
+
+/* Animated background elements */
+#lobby-container:before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, transparent 20%, rgba(237, 20, 124, 0.1) 40%, transparent 60%);
+    animation: rotate 20s linear infinite;
+    z-index: -1;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .waiting-area {
+        flex-direction: column;
+    }
+    
+    .lobby-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    #countdown {
+        font-size: 3.5rem;
+    }
+    
+    #playerList {
+        columns: 1;
+    }
+}

@@ -1,4 +1,4 @@
-// Listahan ng mga bugtong na nahahati sa 4 na level (bawat level ay may limang tanong)
+// script2-modified.js - Quiz for hints only
 const quizData = [
   // Level 1
   {
@@ -31,7 +31,6 @@ const quizData = [
     answer: "Araw",
     choices: ["Araw", "Buwan", "Apoy", "Ulap"]
   },
-
   // Level 2
   {
     level: 2,
@@ -63,7 +62,6 @@ const quizData = [
     answer: "Escalator",
     choices: ["Escalator", "Elevator", "Hagdan", "Ramp"]
   },
-
   // Level 3
   {
     level: 3,
@@ -95,7 +93,6 @@ const quizData = [
     answer: "Lumot",
     choices: ["Lumot", "Damo", "Talahib", "Buhok"]
   },
-
   // Level 4
   {
     level: 4,
@@ -129,10 +126,21 @@ const quizData = [
   }
 ];
 
-// Load current level from sessionStorage or start with Level 1
-let currentLevel = parseInt(sessionStorage.getItem('currentLevel')) || 1;
-// Get only questions for current level
-let levelQuestions = quizData.filter(q => q.level === currentLevel);
+// Load saved bridge state if coming from hint
+const bridgeState = sessionStorage.getItem('bridgeGameState');
+let currentSection = 0;
+let levelQuestions = [];
+
+if (bridgeState) {
+    const state = JSON.parse(bridgeState);
+    currentSection = state.currentSection || 0;
+    levelQuestions = quizData.filter(q => q.level === (currentSection + 1));
+} else {
+    // Fallback to normal progression
+    currentSection = Math.floor((parseInt(sessionStorage.getItem('totalStepsCompleted')) || 0) / 5);
+    levelQuestions = quizData.filter(q => q.level === (currentSection + 1));
+}
+
 let currentQuestionInLevel = 0;
 let levelScore = 0;
 
@@ -145,6 +153,7 @@ const levelIndicator = document.getElementById("levelIndicator");
 {
   let audio = new Audio("sqm.mp3")
   audio.loop = true;
+  audio.volume = 0.5;
   audio.play();
   
   window.addEventListener("beforeunload",function(){
@@ -152,6 +161,9 @@ const levelIndicator = document.getElementById("levelIndicator");
     audio.currentTime = 0;
   });
 }
+
+// Update level indicator for hint quiz
+levelIndicator.innerText = `HINT QUIZ - Section ${currentSection + 1} (Question 1/5)`;
 
 // Start Timer
 function startTimer() {
@@ -179,7 +191,7 @@ function showQuestion() {
   startTimer();
   const currentData = levelQuestions[currentQuestionInLevel];
   questionElement.innerText = currentData.question;
-  levelIndicator.innerText = `Level ${currentData.level} - Tanong ${currentQuestionInLevel + 1}/5`;
+  levelIndicator.innerText = `HINT QUIZ - Section ${currentSection + 1} (Question ${currentQuestionInLevel + 1}/5)`;
   optionsElement.innerHTML = "";
 
   const shuffledChoices = currentData.choices.sort(() => Math.random() - 0.5);
@@ -201,17 +213,12 @@ function checkAnswer(selectedButton) {
   const userAnswer = selectedButton.innerText.trim().toLowerCase();
   const correctAnswer = levelQuestions[currentQuestionInLevel].answer.trim().toLowerCase();
 
-  console.log("User Answer: ", userAnswer);
-  console.log("Correct Answer: ", correctAnswer);
-
   if (userAnswer === correctAnswer) {
     levelScore++;
     selectedButton.style.boxShadow = "0 0 20px green";
-    console.log("Tama!");
   } else {
     selectedButton.style.boxShadow = "0 0 20px red";
     markCorrect();
-    console.log("Mali.");
   }
 
   // Move to next question after 1.5 seconds
@@ -231,28 +238,54 @@ function nextQuestion() {
   currentQuestionInLevel++;
   
   if (currentQuestionInLevel < levelQuestions.length) {
-    // Show next question in same level
+    // Show next question
     showQuestion();
   } else {
-    // Level completed - store results
-    const hasClue = levelScore >= 3;
-    
-    sessionStorage.setItem(`level${currentLevel}_score`, levelScore);
-    sessionStorage.setItem(`level${currentLevel}_hasClue`, hasClue);
-    
-    // Show results
+    // Quiz completed - process result
     timerElement.style.display = "none";
-    questionElement.innerHTML = `<h2>Level ${currentLevel} Natapos!</h2>
-                                <p>Score: ${levelScore} / 5</p>
-                                <p>${hasClue ? "May clue ang tamang salamin sa susunod na bridge!" : "Walang clue sa susunod na bridge."}</p>`;
+    
+    const hasClue = levelScore >= 3;
+    const clueText = hasClue 
+      ? "✅ SUCCESS! You earned a CLUE for this section!" 
+      : "❌ FAILED! No clue earned. Better luck next hint!";
+    
+    questionElement.innerHTML = `
+      <h2>HINT QUIZ COMPLETED!</h2>
+      <div class="result-box">
+        <p>Score: <strong>${levelScore} / 5</strong></p>
+        <p>${clueText}</p>
+        <p>Quiz completed. Returning to bridge...</p>
+      </div>
+    `;
     optionsElement.innerHTML = "";
     
-    // Redirect to bridge after 3 seconds
+    // Store quiz score and clue result
+    sessionStorage.setItem('quizScore', levelScore);
+    
+    // Return to bridge after 3 seconds
     setTimeout(() => {
-      window.location.href = "bridge.html";
+      window.location.href = 'bridge.html';
     }, 3000);
   }
 }
 
 // Start the quiz
 showQuestion();
+
+// Add result box CSS
+const style = document.createElement('style');
+style.textContent = `
+  .result-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    border: 2px solid #eeba6e;
+  }
+  
+  .result-box p {
+    margin: 10px 0;
+    font-size: 18px;
+  }
+`;
+document.head.appendChild(style);

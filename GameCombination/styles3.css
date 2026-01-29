@@ -1,76 +1,522 @@
+:root {
+    --primary-color: #ed147c;
+    --secondary-color: #eeba6e;
+    --safe-color: #00ff00;
+    --danger-color: #ff0000;
+    --ui-bg: rgba(0, 0, 0, 0.7);
+    --ui-border: rgba(255, 255, 255, 0.2);
+    --touch-zone-size: 80px;
+    --control-size: 70px;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 body {
     margin: 0;
+    padding: 0;
     overflow: hidden;
     background-color: #000;
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    touch-action: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-#info {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: #fff;
-    z-index: 2;
-    font-size: 18px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    border-radius: 5px;
-    max-width: 400px;
+/* Device-specific styles */
+body.mobile-device {
+    cursor: none;
 }
 
-.controls {
+body.mobile-device.landscape {
+    /* Landscape optimization */
+}
+
+/* Canvas */
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+/* Hint Icon (Bulb) */
+.hint-icon {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    touch-action: manipulation;
+}
+
+.hint-icon:active {
+    transform: scale(0.95);
+}
+
+.hint-icon .icon {
+    width: 100%;
+    height: 100%;
+    background: var(--ui-bg);
+    border: 2px solid #FFD700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #FFD700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.hint-icon .count {
     position: absolute;
-    bottom: 20px;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background: var(--danger-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    border: 2px solid white;
+}
+
+/* Camera Toggle */
+.camera-toggle {
+    position: fixed;
+    top: 85px;
+    right: 20px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    touch-action: manipulation;
+}
+
+.camera-toggle:active {
+    transform: scale(0.95);
+}
+
+.camera-toggle .camera-icon {
+    width: 100%;
+    height: 100%;
+    background: var(--ui-bg);
+    border: 2px solid #2196F3;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #2196F3;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+}
+
+.camera-toggle .camera-label {
+    position: absolute;
+    bottom: -20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2;
-    display: flex;
-    gap: 10px;
+    font-size: 10px;
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
 }
 
-.controls button {
-    padding: 15px 25px;
-    font-size: 18px;
-    border: none;
-    border-radius: 5px;
-    background: rgba(85, 85, 85, 0.7);
-    color: #fff;
+/* Sound Toggle */
+.sound-indicator {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
-    transition: all 0.3s;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--ui-bg);
+    border: 2px solid var(--ui-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    transition: all 0.2s;
+    touch-action: manipulation;
 }
 
-.controls button:hover {
-    background: rgba(100, 100, 100, 0.9);
-    transform: scale(1.05);
+.sound-indicator:active {
+    transform: scale(0.95);
 }
 
-#btnLeft {
-    background: rgba(76, 175, 80, 0.7);
+.sound-indicator.muted::before {
+    content: "🔇";
 }
 
-#btnRight {
-    background: rgba(33, 150, 243, 0.7);
+.sound-indicator:not(.muted)::before {
+    content: "🔊";
 }
 
-#btnStartQuiz {
-    background: rgba(139, 0, 0, 0.8); /* Dark red to match spooky theme */
-    display: none; /* Hidden by default, shown by script */
+/* Movement Indicator */
+.movement-indicator {
+    position: fixed;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    z-index: 1000;
+    opacity: 0.5;
 }
 
+.movement-indicator .arrow {
+    color: white;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Desktop Controls */
+.desktop-controls {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 40px;
+    z-index: 1000;
+}
+
+body.mobile-device .desktop-controls,
+body.touch-device .desktop-controls {
+    display: none !important;
+}
+
+.desktop-controls button {
+    width: var(--control-size);
+    height: var(--control-size);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: var(--ui-bg);
+    border: 3px solid var(--ui-border);
+    color: white;
+    font-size: 24px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.desktop-controls button:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-controls button:active {
+    transform: scale(0.95);
+}
+
+#btnLeft::before {
+    content: "←";
+}
+
+#btnRight::before {
+    content: "→";
+}
+
+/* Mobile Touch Controls */
+.touch-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    z-index: 1000;
+    display: none;
+    justify-content: space-between;
+    padding: 20px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    touch-action: manipulation;
+}
+
+body.mobile-device .touch-controls,
+body.touch-device .touch-controls {
+    display: flex;
+}
+
+.touch-zone {
+    width: var(--touch-zone-size);
+    height: var(--touch-zone-size);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-bg);
+    border: 3px solid var(--ui-border);
+    color: white;
+    font-size: 28px;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.1s;
+    position: relative;
+}
+
+.touch-zone:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.touch-zone .touch-label {
+    pointer-events: none;
+}
+
+.left-zone {
+    border-color: #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+.right-zone {
+    border-color: #2196F3;
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
+}
+
+.center-zone {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+/* Virtual Joystick */
+.virtual-joystick {
+    position: fixed;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    z-index: 1000;
+    display: none;
+    touch-action: manipulation;
+}
+
+body.mobile-device .virtual-joystick {
+    display: block;
+}
+
+.joystick-base {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    position: absolute;
+}
+
+.joystick-handle {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+}
+
+/* Error Overlay */
+.error-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.error-content {
+    text-align: center;
+    color: white;
+    max-width: 300px;
+}
+
+.error-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.orientation-icon {
+    font-size: 60px;
+    margin-top: 30px;
+    animation: rotate 2s infinite;
+}
+
+/* Animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Breakpoints */
 @media (max-width: 768px) {
-    .controls {
-        bottom: 10px;
-        width: 90%;
-        justify-content: center;
-        flex-wrap: wrap;
+    :root {
+        --touch-zone-size: 70px;
+        --control-size: 60px;
     }
     
-    .controls button {
-        padding: 12px 20px;
-        font-size: 16px;
-        flex: 1;
-        min-width: 120px;
+    .hint-icon {
+        top: 15px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .hint-icon .icon {
+        font-size: 24px;
+    }
+    
+    .hint-icon .count {
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+    }
+    
+    .camera-toggle {
+        top: 80px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .camera-toggle .camera-icon {
+        font-size: 24px;
+    }
+    
+    .sound-indicator {
+        top: 15px;
+        left: 15px;
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+    
+    .movement-indicator {
+        bottom: 120px;
+    }
+    
+    .touch-controls {
+        height: 130px;
+        padding: 15px;
+    }
+    
+    .virtual-joystick {
+        bottom: 160px;
+        width: 100px;
+        height: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --touch-zone-size: 60px;
+    }
+    
+    .hint-icon {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .hint-icon .icon {
+        font-size: 20px;
+    }
+    
+    .camera-toggle {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .camera-toggle .camera-icon {
+        font-size: 20px;
+    }
+    
+    .touch-zone {
+        font-size: 24px;
+    }
+    
+    .movement-indicator {
+        bottom: 110px;
+        gap: 15px;
+    }
+    
+    .movement-indicator .arrow {
+        font-size: 20px;
+    }
+    
+    .touch-controls {
+        height: 120px;
+    }
+    
+    .virtual-joystick {
+        bottom: 140px;
+        width: 90px;
+        height: 90px;
+    }
+}
+
+@media (orientation: portrait) {
+    .error-overlay {
+        display: flex;
+    }
+}
+
+/* High DPI Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .hint-icon,
+    .sound-indicator,
+    .camera-toggle,
+    .desktop-controls button,
+    .touch-zone {
+        border-width: 1.5px;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }
