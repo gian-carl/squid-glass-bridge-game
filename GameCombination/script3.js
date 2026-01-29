@@ -36,10 +36,46 @@ class GameControls {
         
         if (this.isTouchDevice) {
             this.setupTouchControls();
+            this.setupMobileActionButton(); // ADDED: Mobile action button
         }
         
         this.setupDesktopControls();
         this.setupCameraToggle();
+    }
+    
+    setupMobileActionButton() { // ADDED: New method for mobile jump button
+        const playBtn = document.getElementById('mobilePlayBtn');
+        
+        if (playBtn) {
+            playBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Visual feedback
+                playBtn.classList.add('active');
+                
+                // Trigger jump action
+                performMobileJumpAction();
+                
+                // Remove feedback after delay
+                setTimeout(() => {
+                    playBtn.classList.remove('active');
+                }, 200);
+            });
+            
+            playBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            // Also support click for testing on desktop
+            playBtn.addEventListener('click', (e) => {
+                if (this.isTouchDevice) {
+                    e.preventDefault();
+                    performMobileJumpAction();
+                }
+            });
+        }
     }
     
     setupTouchControls() {
@@ -1306,6 +1342,7 @@ function createCircusHouseWithSign(signText = "WELCOME TO BRIDGE GAME") {
     const signMaterial = new THREE.MeshBasicMaterial({
         map: signTexture,
         transparent: true,
+        opacity: 0.9,
         side: THREE.DoubleSide
     });
     
@@ -1739,6 +1776,45 @@ const minLandingX = -panelWidth * 2;
 const landingZStart = startZ + landingAreaLength/2;
 const landingZRange = landingAreaLength/2 - 1;
 
+// ========== MOBILE JUMP/ACTION FUNCTION ========== // ADDED
+function performMobileJumpAction() {
+    if (isAnimating || gameOver) return;
+    
+    if (isOnLandingArea) {
+        if (canStartQuiz) {
+            // At bridge entrance - step forward onto bridge
+            // Randomly choose left or right for mobile
+            const side = Math.random() < 0.5 ? "left" : "right";
+            stepForward(side);
+        } else {
+            // Just jump in place on landing area
+            const jumpHeight = 0.3;
+            const duration = 500;
+            const startTime = performance.now();
+            const startPos = player.position.clone();
+            
+            function jumpAnimation(time) {
+                const elapsed = time - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const yOffset = jumpHeight * Math.sin(Math.PI * t);
+                player.position.y = panelY + 1 + yOffset;
+                
+                if (t < 1) {
+                    requestAnimationFrame(jumpAnimation);
+                }
+            }
+            requestAnimationFrame(jumpAnimation);
+        }
+    } else {
+        // On bridge - step forward based on which panel is safe
+        const currentStep = totalStepsCompleted;
+        if (currentStep < totalRows) {
+            const safeSide = safeChoices[currentStep];
+            stepForward(safeSide);
+        }
+    }
+}
+
 // ========== HINT SYSTEM FUNCTIONS ==========
 function updateHintDisplay() {
     const hintCountElement = document.getElementById('hintCount');
@@ -1903,14 +1979,20 @@ function showAllSafeGlassesForCurrentLevel() {
 
 // ========== MOVEMENT FUNCTIONS ==========
 function handleMovement() {
-    if (!isOnLandingArea || isAnimating || gameOver) return;
-    
-    const movement = gameControls.getMovement();
-    
-    if (movement.moveX !== 0 || movement.moveZ !== 0) {
-        movePlayer(movement.moveX, movement.moveZ);
-    }
+  if (!isOnLandingArea || isAnimating || gameOver) return;
+
+  const movement = gameControls.getMovement();
+  if (movement.moveX !== 0 || movement.moveZ !== 0) {
+    movePlayer(movement.moveX, movement.moveZ);
+  }
+
+  // ===== MOBILE JOYSTICK INPUT =====
+  if (joystickActive) {
+    player.position.x += joystickX * 0.08;
+    player.position.z += joystickY * 0.08;
+  }
 }
+
 
 function movePlayer(directionX, directionZ = 0) {
     if (!isOnLandingArea || isAnimating || gameOver) return;
@@ -2335,71 +2417,104 @@ renderer.domElement.addEventListener('click', () => {
     renderer.domElement.focus();
 });
 
+// ===== MOBILE PERFORMANCE CONTROL =====
+const isMobileLite = document.documentElement.classList.contains("mobile-lite");
+let lastFrameTime = 0;
+const MOBILE_FRAME_DELAY = 50; // ~20 FPS
+
+
 // ========== ANIMATION LOOP ==========
-function animate() {
-    requestAnimationFrame(animate);
-    
-    // Handle movement based on controls
-    handleMovement();
-    
+function animate(time) {
+  requestAnimationFrame(animate);
+
+  // ===== MOBILE FPS LIMITER =====
+  if (isMobileLite) {
+    if (time - lastFrameTime < MOBILE_FRAME_DELAY) {
+      return;
+    }
+    lastFrameTime = time;
+  }
+
+  // Handle movement based on controls
+  handleMovement();
+
+  // ===== SKIP HEAVY VISUAL EFFECTS ON MOBILE =====
+  if (!isMobileLite) {
+
     // Update bridge lights
     bridgeLights.forEach(light => {
-        const scale = 0.8 + 0.2 * Math.abs(Math.sin(Date.now() * 0.005 + light.position.z));
-        light.scale.set(scale, scale, scale);
+      const scale = 0.8 + 0.2 * Math.abs(
+        Math.sin(Date.now() * 0.005 + light.position.z)
+      );
+      light.scale.set(scale, scale, scale);
     });
 
     // Animate circus house elements
     [startHouse, finishHouse].forEach(house => {
-        if (house.userData.bulbs) {
-            house.userData.bulbs.forEach(bulb => {
-                const flicker = 0.8 + 0.2 * Math.random();
-                const baseColor = new THREE.Color(bulb.material.color);
-                baseColor.multiplyScalar(flicker);
-                bulb.material.emissive = baseColor;
-            });
-        }
-        
-        if (house.userData.clown) {
-            const time = Date.now() * 0.001;
-            if (house.userData.clown.material.opacity > 0) {
-                house.userData.clown.position.y = 3.5 + Math.sin(time) * 0.05;
-            }
-        }
-        
-        // Animate flags
-        house.children.forEach(child => {
-            if (child.userData && child.userData.waveSpeed !== undefined) {
-                const time = Date.now() * 0.001;
-                child.rotation.z = Math.sin(time * child.userData.waveSpeed + child.userData.waveOffset) * 0.1;
-            }
+
+      // Flickering bulbs
+      if (house.userData.bulbs) {
+        house.userData.bulbs.forEach(bulb => {
+          const flicker = 0.8 + 0.2 * Math.random();
+          const baseColor = new THREE.Color(bulb.material.color);
+          baseColor.multiplyScalar(flicker);
+          bulb.material.emissive = baseColor;
         });
+      }
+
+      // Clown animation
+      if (house.userData.clown) {
+        const t = Date.now() * 0.001;
+        if (house.userData.clown.material.opacity > 0) {
+          house.userData.clown.position.y =
+            3.5 + Math.sin(t) * 0.05;
+        }
+      }
+
+      // Flags waving
+      house.children.forEach(child => {
+        if (child.userData && child.userData.waveSpeed !== undefined) {
+          const t = Date.now() * 0.001;
+          child.rotation.z =
+            Math.sin(t * child.userData.waveSpeed + child.userData.waveOffset) * 0.1;
+        }
+      });
     });
+  }
 
-    // Camera positioning based on mode
-    if (cameraMode === "first-person" && !gameOver) {
-        const eyeOffset = new THREE.Vector3(0, 1.6, 0);
-        const cameraPos = player.position.clone().add(eyeOffset);
-        camera.position.lerp(cameraPos, 0.1);
-        const direction = new THREE.Vector3(
-            Math.cos(cameraPitch) * Math.sin(cameraAngle),
-            Math.sin(cameraPitch),
-            -Math.cos(cameraPitch) * Math.cos(cameraAngle)
-        );
-        const lookAtPos = cameraPos.clone().add(direction);
-        camera.lookAt(lookAtPos);
-    } else if (cameraMode === "third-person" && !gameOver) {
-        // Third person camera - behind and above player
-        const offset = thirdPersonOffset.clone();
-        const cameraPos = player.position.clone().add(offset);
-        camera.position.lerp(cameraPos, 0.1);
-        camera.lookAt(player.position.x, player.position.y + 0.5, player.position.z);
-    }
+  // ===== CAMERA HANDLING (KEEP FOR MOBILE & DESKTOP) =====
+  if (cameraMode === "first-person" && !gameOver) {
+    const eyeOffset = new THREE.Vector3(0, 1.6, 0);
+    const cameraPos = player.position.clone().add(eyeOffset);
+    camera.position.lerp(cameraPos, 0.1);
 
-    // Update falling objects
-    updateFallingObjects();
+    const direction = new THREE.Vector3(
+      Math.cos(cameraPitch) * Math.sin(cameraAngle),
+      Math.sin(cameraPitch),
+      -Math.cos(cameraPitch) * Math.cos(cameraAngle)
+    );
 
-    renderer.render(scene, camera);
+    const lookAtPos = cameraPos.clone().add(direction);
+    camera.lookAt(lookAtPos);
+
+  } else if (cameraMode === "third-person" && !gameOver) {
+    const offset = thirdPersonOffset.clone();
+    const cameraPos = player.position.clone().add(offset);
+    camera.position.lerp(cameraPos, 0.1);
+    camera.lookAt(
+      player.position.x,
+      player.position.y + 0.5,
+      player.position.z
+    );
+  }
+
+  // Update falling objects (KEEP – gameplay logic)
+  updateFallingObjects();
+
+  // Render scene
+  renderer.render(scene, camera);
 }
+
 
 // ========== INITIALIZE GAME ==========
 window.addEventListener("load", () => {
@@ -2517,5 +2632,77 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// Start animation
+// =====================================================
+// VIRTUAL JOYSTICK LOGIC (MOBILE)
+// SIMPLIFIED - Only movement, no jump detection
+// =====================================================
+
+const joystick = document.getElementById("virtualJoystick");
+const joystickHandle = joystick?.querySelector(".joystick-handle");
+
+let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+
+let joystickRect = null;
+let joystickRadius = 0;
+
+// Helper: recalc bounds (important for mobile + rotation)
+function updateJoystickBounds() {
+  if (!joystick) return;
+  joystickRect = joystick.getBoundingClientRect();
+  joystickRadius = joystickRect.width / 2;
+}
+
+// Initial calc
+updateJoystickBounds();
+
+// Recalc on resize / orientation change
+window.addEventListener("resize", updateJoystickBounds);
+window.addEventListener("orientationchange", updateJoystickBounds);
+
+if (joystick && joystickHandle) {
+
+  joystick.addEventListener("touchstart", e => {
+    joystickActive = true;
+    updateJoystickBounds();
+    e.preventDefault();
+  }, { passive: false });
+
+  joystick.addEventListener("touchmove", e => {
+    if (!joystickActive || !joystickRect) return;
+
+    const touch = e.touches[0];
+
+    const dx = touch.clientX - (joystickRect.left + joystickRadius);
+    const dy = touch.clientY - (joystickRect.top + joystickRadius);
+
+    const distance = Math.min(joystickRadius, Math.hypot(dx, dy));
+    const angle = Math.atan2(dy, dx);
+
+    joystickX = Math.cos(angle) * (distance / joystickRadius);
+    joystickY = Math.sin(angle) * (distance / joystickRadius);
+
+    // IMPORTANT: preserve center offset
+    joystickHandle.style.transform =
+      `translate(calc(-50% + ${joystickX * joystickRadius}px),
+                 calc(-50% + ${joystickY * joystickRadius}px))`;
+
+    e.preventDefault();
+  }, { passive: false });
+
+  function resetJoystick() {
+    joystickActive = false;
+    joystickX = 0;
+    joystickY = 0;
+    joystickHandle.style.transform = "translate(-50%, -50%)";
+  }
+
+  joystick.addEventListener("touchend", resetJoystick);
+  joystick.addEventListener("touchcancel", resetJoystick);
+}
+
+// =====================================================
+// START GAME LOOP
+// =====================================================
 animate();

@@ -520,3 +520,45 @@ body.mobile-device .virtual-joystick {
         transition-duration: 0.01ms !important;
     }
 }
+    
+/* ===== MOBILE PERFORMANCE MODE ===== */
+.mobile-lite canvas {
+  image-rendering: optimizeSpeed;
+}
+
+.mobile-lite .virtual-joystick,
+.mobile-lite .movement-indicator,
+.mobile-lite .error-overlay {
+  display: none;
+}
+
+.mobile-lite * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* =====================================================
+   PATCH: FIX MISPLACED WHITE JOYSTICK (MOBILE ONLY)
+   Purpose: Move virtual joystick from screen center
+   Author: ChatGPT
+   Safe: DOES NOT remove any existing code
+   ===================================================== */
+
+body.mobile-device .virtual-joystick {
+  left: 20px !important;      /* bottom-left position */
+  bottom: 160px !important;   /* above touch controls */
+  transform: none !important; /* remove centering */
+}
+
+/* Optional size tweak for small phones */
+@media (max-width: 480px) {
+  body.mobile-device .virtual-joystick {
+    width: 80px;
+    height: 80px;
+  }
+
+  body.mobile-device .joystick-handle {
+    width: 36px;
+    height: 36px;
+  }
+}

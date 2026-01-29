@@ -1,0 +1,56 @@
+Here are the correct steps for Windows 10:
+
+1. Install Node.js
+
+Go to nodejs.org
+
+Download LTS version
+
+Run the installer → keep default options
+
+Restart your PC
+
+Verify:CMD
+
+node -v
+npm -v
+
+
+If both show versions, Node.js is installed correctly.
+
+2. Create a Project
+mkdir socket-app
+cd socket-app
+npm init -y
+
+3. Install Socket.IO
+npm install socket.io
+
+
+For client-side (browser):
+
+npm install socket.io-client
+
+4. Basic Server Test
+
+Create server.js:
+
+const io = require("socket.io")(3000);
+
+io.on("connection", socket => {
+  console.log("User connected");
+});
+
+
+Run:
+
+node server.js
+
+
+If no errors appear, Socket.IO is working.
+
+Common Errors
+
+node is not recognized → Node not installed or PATH not set
+
+Firewall block → Allow Node.js in Windows Defender

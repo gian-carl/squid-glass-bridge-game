@@ -87,6 +87,12 @@
     <audio id="msb" src="heart_(128k).mp3" preload="auto" loop></audio>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        document.documentElement.classList.add("mobile-lite");
+        console.log("Mobile‑lite mode enabled");
+    }
+    </script>
     <script src="script3.js"></script>
 </body>
 </html>

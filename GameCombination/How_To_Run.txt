@@ -1,0 +1,147 @@
+📌 HOW TO GET IP ADDRESS (WINDOWS)
+Method A (Recommended – simple)
+
+    Press Windows + R
+
+    Type cmd, press Enter
+
+    In the Command Prompt, type:
+
+ipconfig
+
+Look for:
+
+    IPv4 Address . . . . . . : 192.168.x.x
+
+    This IPv4 address is your local IP
+    (example: 192.168.1.25)
+
+👉 This is the IP your partner will use on their phone or PC (same Wi‑Fi).
+📌 HOW TO RUN THE PROJECT USING NODE.JS
+
+This is 100% valid and recommended for HTML/CSS/JS projects like yours.
+1️⃣ Install Node.js (only once)
+
+    Go to nodejs.org
+
+    Download LTS version
+
+    Install → click Next all the way
+
+    Verify installation:
+
+    node -v
+    npm -v
+
+2️⃣ Project Folder Structure (example)
+
+glass-bridge-game/
+│
+├── index.html
+├── styles3.css
+├── script3.js
+├── server.js
+├── assets/
+
+3️⃣ Create server.js
+
+Inside your project folder, create server.js and paste this:
+
+const express = require("express");
+const path = require("path");
+
+const app = express();
+const PORT = 3000;
+
+// Serve static files (HTML, CSS, JS)
+app.use(express.static(__dirname));
+
+// Default route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Start server
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on:`);
+  console.log(`http://localhost:${PORT}`);
+});
+
+4️⃣ Install Express (first time only)
+
+Open Command Prompt in the project folder and run:
+
+npm init -y
+npm install express
+
+This creates:
+
+    node_modules/
+
+    package.json
+
+5️⃣ Run the Project
+
+In the same folder, run:
+
+node server.js
+
+You should see:
+
+Server running on:
+http://localhost:3000
+
+6️⃣ Open the Game
+On the SAME computer:
+
+http://localhost:3000
+
+On your PARTNER’S phone / PC (same Wi‑Fi):
+
+http://YOUR_IP:3000
+
+Example:
+
+http://192.168.1.25:3000
+
+📱 IMPORTANT MOBILE NOTES
+
+    Phone must be on the same Wi‑Fi
+
+    Disable VPN / mobile data
+
+    If it doesn’t load:
+
+        Allow Node.js through Windows Firewall
+
+        Try a different port (e.g. 8080)
+
+❓ WHY NODE IS GOOD (Answer to your question)
+
+✔ Works perfectly with HTML / CSS / JS
+✔ Needed for:
+
+    Mobile testing
+
+    Multiplayer later
+
+    APIs / backend
+    ✔ Better than just opening index.html
+
+So yes:
+
+    ✅ node server.js IS RECOMMENDED
+
+🧠 ONE‑LINE SUMMARY FOR YOUR PARTNER
+
+    “Run ipconfig to get IPv4 → run node server.js → open http://IP:3000 on phone.”
+
+If you want, next I can:
+
+    Add HTTPS (for mobile sensors)
+
+    Make it one‑click run
+
+    Add QR code to open on phone
+
+    Or help you deploy online (Vercel / Netlify)

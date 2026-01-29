@@ -87,4 +87,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
+
+
+    /* ================= MULTIPLAYER PATCH (ADD ONLY) ================= */
+
+// Create socket connection
+const socket = io({ transports: ["websocket"] });
+
+// Override FAKE player simulation visually (no deletion)
+socket.on("players", players => {
+  try {
+    // Force real player count
+    document.getElementById("playerCount").textContent = players.length;
+
+    // Replace player list safely
+    const list = document.getElementById("playerList");
+    list.innerHTML = "";
+
+    players.forEach((_, i) => {
+      const li = document.createElement("li");
+      li.textContent = `Player ${i + 1} ✅`;
+      list.appendChild(li);
+    });
+  } catch (e) {
+    console.warn("Multiplayer patch skipped:", e);
+  }
+});
+
+// Sync game start across all devices
+socket.on("forceStart", () => {
+  if (typeof startGame === "function") {
+    startGame();
+  }
+});
+
+// Intercept start button WITHOUT removing original
+const __originalStartNow = window.startGameNow;
+window.startGameNow = function () {
+  socket.emit("startGame");
+  if (__originalStartNow) __originalStartNow();
+};
+
+// Sync countdown finish WITHOUT touching interval
+(function syncCountdown() {
+  const check = setInterval(() => {
+    if (typeof countdownTime !== "undefined" && countdownTime <= 0) {
+      socket.emit("startGame");
+      clearInterval(check);
+    }
+  }, 500);
+})();
+
 });
